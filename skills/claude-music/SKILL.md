@@ -41,6 +41,7 @@ allowed-tools:
 | `/music library` | Browse and manage generated music |
 | `/music web` | Local browser dashboard: generate, play, rate |
 | `/music lora` | LoRA/LoKr fine-tuning management |
+| `/music game` | Game music from a cue sheet: loops, layers, stings, game loudness |
 | `/music setup` | Verify installation and dependencies |
 
 ## Orchestration Logic
@@ -60,6 +61,7 @@ When the user provides a specific command, load the matching sub-skill:
 - `/music library` or intent is list songs/browse output/manage music → Read `skills/claude-music-library/SKILL.md`
 - `/music web` or intent is dashboard/browser app/web UI/visual player → Read `skills/claude-music-web/SKILL.md`
 - `/music lora` or intent is train/fine-tune/LoRA/custom style → Read `skills/claude-music-lora/SKILL.md`
+- `/music game` or intent is game music/cue sheet/loop/combat layer/sting/mission music → Read `skills/claude-music-game/SKILL.md`
 - `/music setup` → Run `bash ~/.claude/skills/claude-music/scripts/setup.sh`
 
 ### Interactive Mode
@@ -166,6 +168,7 @@ The wrapper handles: path setup, environment variables, VRAM pre-check, `uv run`
 | `claude-music-library` | Management | Browse/search generated music output |
 | `claude-music-web` | UI | Local browser dashboard (generate, play, rate) |
 | `claude-music-lora` | Training | LoRA/LoKr fine-tuning wrapper |
+| `claude-music-game` | Generation | Game cues: loops, layers, stings, loudness, provenance |
 
 ## Scripts
 
@@ -173,6 +176,7 @@ The wrapper handles: path setup, environment variables, VRAM pre-check, `uv run`
 |--------|---------|
 | `scripts/music_engine.py` | Core ACE-Step Python API wrapper (all 6 task types) |
 | `scripts/music_engine.sh` | Bash wrapper (env, VRAM, `uv run`, show-once star nudge) |
+| `scripts/game_cues.py` | Game cue sheets: render takes, pick, finish (loops, seams, loudness, OGG, provenance) |
 | `scripts/music_export.sh` | FFmpeg platform export commands |
 | `scripts/rank.py` | Batch-rank outputs vs caption (stub — Theme 3 of research plan) |
 | `scripts/detect_gpu.sh` | GPU detection + tier recommendation → JSON |

@@ -48,7 +48,7 @@
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `src_audio` | str | None | Source audio path — used by ALL audio-to-audio modes (cover, repaint, extract, lego, complete) |
-| `cover_noise_strength` | float | 0.5 | Cover mode: noise to apply to source. 0.0 = faithful to source, 1.0 = fully reimagined. Used by `cover` task_type only. |
+| `cover_noise_strength` | float | 0.5 | Cover mode: how close to stay to the source. 1.0 = closest to the source, 0.0 = pure noise (ACE-Step's own field description). Used by `cover` task_type only. |
 | `repainting_start` | float | 0.0 | Repaint region start (seconds) |
 | `repainting_end` | float | -1.0 | Repaint region end (-1 = end of file) |
 
