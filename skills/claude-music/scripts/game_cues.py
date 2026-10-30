@@ -291,7 +291,20 @@ def parse_loudnorm(stderr: str) -> dict:
 # Tools: ffmpeg, the engine, git
 # ---------------------------------------------------------------------------
 
+def tool_path(name: str) -> str:
+    """A command from PATH, else winget's link folder (shells started before a winget install miss it, and
+    Git Bash can mangle a Windows path added to PATH), else the bare name."""
+    found = shutil.which(name)
+    if found:
+        return found
+    local = os.environ.get("LOCALAPPDATA")
+    if local:
+        found = shutil.which(name, path=str(Path(local) / "Microsoft" / "WinGet" / "Links"))
+    return found or name
+
+
 def _run(cmd: list[str], cwd=None, env=None) -> subprocess.CompletedProcess:
+    cmd = [tool_path(cmd[0]), *cmd[1:]]
     try:
         result = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True,
                                 encoding="utf-8", errors="replace")
@@ -473,7 +486,14 @@ def _gen_args(cue: dict, duration: float) -> list[str]:
     return args
 
 
+def require_ffmpeg() -> None:
+    """Fail before a long engine run rather than after it."""
+    if not shutil.which(tool_path("ffmpeg")):
+        raise ToolError("ffmpeg not found on PATH or in winget's link folder")
+
+
 def cmd_render(sheet: dict, ids: list[str] | None, takes: int | None) -> dict:
+    require_ffmpeg()
     state = load_state(sheet)
     rendered = []
     for cue in _select(sheet, ids):
@@ -580,6 +600,7 @@ def _shape_oneshot(cue: dict, take_path: Path, out_path: Path) -> dict:
 
 
 def cmd_finish(sheet: dict, ids: list[str] | None) -> dict:
+    require_ffmpeg()
     state = load_state(sheet)
     versions = {"fork": git_commit(REPO_DIR), "ace_step": None}
     with contextlib.suppress(ToolError):
