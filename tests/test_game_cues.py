@@ -235,3 +235,14 @@ def test_provenance_has_what_the_asset_log_needs(tmp_path):
         assert key in record
     assert record["ai_generated"] is True
     assert record["seed"] == 1234
+
+
+def test_listen_page_lists_takes_with_relative_links_and_pick_commands(tmp_path):
+    sheet = gc.load_sheet(write_sheet(tmp_path, [LOOP, STING]))
+    take_path = sheet["paths"]["raw"] / "MUS_M02_Calm" / "takes" / "MUS_M02_Calm_take01.wav"
+    state = {"MUS_M02_Calm": {"takes": [{"take": 1, "path": str(take_path)}], "pick": 1}}
+    page = gc.listen_html(sheet, state, sheet["paths"]["raw"])
+    assert 'src="MUS_M02_Calm/takes/MUS_M02_Calm_take01.wav"' in page
+    assert "pick sheet.json MUS_M02_Calm 1" in page
+    assert "<b>picked</b>" in page
+    assert "No takes yet." in page  # the sting

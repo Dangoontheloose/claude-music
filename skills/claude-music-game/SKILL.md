@@ -23,7 +23,8 @@ Needs ffmpeg and ffprobe on PATH, and uv plus ACE-Step from `config.json` for `r
 1. **Write a cue sheet** (JSON, below). One sheet per batch, for example one per mission.
 2. **Render takes:** `python game_cues.py render SHEET [--cue ID] [--takes N]`. Takes land in
    `<raw>/<cue>/takes/<cue>_takeNN.wav`, 48 kHz stereo 24-bit.
-3. **The user listens and picks.** Never pick for them: `python game_cues.py pick SHEET CUE TAKE`.
+3. **The user listens and picks.** `python game_cues.py listen SHEET` writes `<raw>/<sheet>-listen.html`, a local
+   page with a player per take and the pick command next to it. Never pick for them: `python game_cues.py pick SHEET CUE TAKE`.
 4. **Finish:** `python game_cues.py finish SHEET [--cue ID]`. For each picked cue:
    - `loop`: trim to whole bars, then hide the end-to-start seam (below);
    - `layer`: same length as its parent, then the same seam step;

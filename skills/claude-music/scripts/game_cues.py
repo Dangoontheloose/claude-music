@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import datetime as _dt
+import html
 import json
 import math
 import os
@@ -28,6 +29,7 @@ import re
 import shutil
 import subprocess
 import sys
+import urllib.parse
 import wave
 from pathlib import Path
 
@@ -649,6 +651,47 @@ def cmd_status(sheet: dict) -> dict:
     return {"success": True, "command": "status", "sheet": sheet["name"], "cues": cues}
 
 
+def listen_html(sheet: dict, state: dict, page_dir: Path) -> str:
+    """A local page with a player per take (and the seam preview of finished loops) and the pick command."""
+    def src(path: str) -> str:
+        return urllib.parse.quote(Path(os.path.relpath(path, page_dir)).as_posix())
+
+    rows = []
+    for cue in sheet["cues"].values():
+        entry = state.get(cue["id"]) or {}
+        timing = f"{cue['bpm']} BPM, " if cue.get("bpm") else ""
+        rows.append(f"<h2>{html.escape(cue['id'])} <small>{cue['type']}, {timing}{html.escape(cue.get('key') or '')}"
+                    f"</small></h2><p class=cap>{html.escape(cue['caption'])}</p>")
+        takes = entry.get("takes") or []
+        if not takes:
+            rows.append("<p class=none>No takes yet.</p>")
+        for take in takes:
+            mark = " <b>picked</b>" if entry.get("pick") == take["take"] else ""
+            command = f"pick {sheet['path'].name} {cue['id']} {take['take']}"
+            rows.append(f"<div class=take><span>Take {take['take']}{mark}</span>"
+                        f"<audio controls preload=none src=\"{src(take['path'])}\"></audio>"
+                        f"<code>{html.escape(command)}</code></div>")
+        preview = Path(take["path"]).parents[1] / "finished" / f"{cue['id']}_loop3.wav" if takes else None
+        if preview and entry.get("finished") and preview.exists():
+            rows.append(f"<div class=take><span>Finished, looped 3 times</span>"
+                        f"<audio controls preload=none src=\"{src(str(preview))}\"></audio></div>")
+    style = ("body{font:15px system-ui,sans-serif;max-width:900px;margin:24px auto;padding:0 16px}"
+             "h2{margin:28px 0 4px}small{font-weight:normal;color:#666}.cap{color:#444;margin:0 0 8px}"
+             ".take{display:flex;gap:12px;align-items:center;margin:6px 0;flex-wrap:wrap}.take span{width:150px}"
+             "audio{width:360px;max-width:100%}code{font-size:12px;color:#555}.none{color:#999}")
+    return (f"<!doctype html><meta charset=utf-8><title>{html.escape(sheet['name'])} takes</title>"
+            f"<style>{style}</style><h1>{html.escape(sheet['name'])}: takes</h1>"
+            f"<p>Listen, then run <code>game_cues.py</code> with the pick command next to the take you want.</p>"
+            + "".join(rows))
+
+
+def cmd_listen(sheet: dict) -> dict:
+    page = sheet["paths"]["raw"] / f"{sheet['name']}-listen.html"
+    page.parent.mkdir(parents=True, exist_ok=True)
+    page.write_text(listen_html(sheet, load_state(sheet), page.parent), encoding="utf-8")
+    return {"success": True, "command": "listen", "page": str(page)}
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Game music from a cue sheet (claude-music, Plowshare fork)")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -665,6 +708,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--cue", action="append", help="Only this cue (repeatable)")
     p = sub.add_parser("status", help="Takes, picks and finished cues")
     p.add_argument("sheet")
+    p = sub.add_parser("listen", help="Write a local page to listen to the takes and pick one")
+    p.add_argument("sheet")
     return parser
 
 
@@ -678,6 +723,8 @@ def main(argv: list[str] | None = None) -> int:
             result = cmd_pick(sheet, args.cue, args.take)
         elif args.command == "finish":
             result = cmd_finish(sheet, args.cue)
+        elif args.command == "listen":
+            result = cmd_listen(sheet)
         else:
             result = cmd_status(sheet)
     except (SheetError, ToolError) as e:
