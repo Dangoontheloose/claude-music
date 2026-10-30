@@ -43,7 +43,8 @@ Needs ffmpeg and ffprobe on PATH, and uv plus ACE-Step from `config.json` for `r
 
 `finish` reports `seam_metrics` per loop: `jump` (end-to-start sample step, full scale = 1; a click is
 above about 0.05) and `rms_ratio` (last 50 ms over first 50 ms; far below 1 means it fades out before the
-wrap). These catch obvious faults; the user's ear decides.
+wrap). These catch obvious faults; the user's ear decides: each finished loop also gets
+`<raw>/<cue>/finished/<cue>_loop3.wav`, the loop played three times in a row, to hear the seam.
 
 ## Cue sheet
 

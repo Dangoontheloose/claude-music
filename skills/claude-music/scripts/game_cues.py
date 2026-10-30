@@ -622,6 +622,11 @@ def cmd_finish(sheet: dict, ids: list[str] | None) -> dict:
         })
         if cue["type"] in ("loop", "layer"):
             info["seam_metrics"] = seam_metrics(read_wav(master), CHANNELS, SAMPLE_WIDTH, SAMPLE_RATE)
+            # The loop played three times in a row, to hear the seam
+            preview = work / f"{cue['id']}_loop3.wav"
+            _run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-stream_loop", "2", "-i", str(master),
+                  "-c", "copy", str(preview)])
+            info["preview"] = str(preview)
 
         record = provenance(sheet, cue, take, info, versions)
         prov_path = sheet["paths"]["provenance"] / f"{cue['id']}.json"
